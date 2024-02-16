@@ -20,225 +20,217 @@ import jwt
 
 SECRET_KEY = os.getenv('SECRET_KEY')
 
-@app.route('/api/create_user', methods=['POST'])
+@app.post('/api/create_user')
 def create_user():
-    if request.method == 'POST':
-        try:
-            body = request.get_json()
-            name = body.get('name')
-            email = body.get('email')
-            password = body.get('password')
-            user_type_id = body.get('user_type_id')
-            
-            password_hash = generate_password_hash(password)
-            
-            user = User(name=name, email=email, password_hash=password_hash, user_type_id=user_type_id)
-            db.session.add(user)
-            db.session.commit()
-            
-            return jsonify({
-                'message': "Usuario criado com sucesso!"
-            }), 201
-            
-        except Exception as error:
-            print_error_details(error)
-            return jsonify({
-                    'status': 'error',
-                    'message': 'An error has occurred!',
-                    'error_class': str(error.__class__),
-                    'error_cause': str(error.__cause__)
-                }), 500
+    try:
+        body = request.get_json()
+        name = body.get('name')
+        email = body.get('email')
+        password = body.get('password')
+        user_type_id = body.get('user_type')
+        
+        password_hash = generate_password_hash(password)
+        
+        user = User(name=name, email=email, password_hash=password_hash, user_type_id=user_type_id)
+        db.session.add(user)
+        db.session.commit()
+        
+        return jsonify({
+            'message': "Usuario criado com sucesso!"
+        }), 201
+        
+    except Exception as error:
+        print_error_details(error)
+        return jsonify({
+                'status': 'error',
+                'message': 'An error has occurred!',
+                'error_class': str(error.__class__),
+                'error_cause': str(error.__cause__)
+            }), 500
 
 
-@app.route('/api/get_users', methods=['GET'])
+@app.get('/api/get_users')
 def get_users():
-    if request.method == 'GET':
-        try:   
-            users = User.query.all()
-            schema = UserSchema(many=True)
-            payload = schema.dump(users)
+    try:   
+        users = User.query.all()
+        schema = UserSchema(many=True)
+        payload = schema.dump(users)
+        return jsonify({
+            'users': payload
+        }), 200
+        
+    except Exception as error:
+        print_error_details(error)
+        return jsonify({
+                'status': 'error',
+                'message': 'An error has occurred!',
+                'error_class': str(error.__class__),
+                'error_cause': str(error.__cause__)
+            }), 500
+
+
+@app.get('/api/get_user_by_id')
+def get_user_by_id():
+    try:
+        id = request.args.get('user_id')
+        user = User.query.filter_by(id=id).first()
+        
+        if user == None:
             return jsonify({
-                'users': payload
+                'status': 'error',
+                'message': 'Usuario não existe!'
+            }), 200
+        
+        schema = UserSchema()
+        payload = schema.dump(user)
+        return jsonify({
+            'status': 'ok',
+            'user': payload
+        }), 200
+        
+    except Exception as error:
+        print_error_details(error)
+        return jsonify({
+                'status': 'error',
+                'message': 'An error has occurred!',
+                'error_class': str(error.__class__),
+                'error_cause': str(error.__cause__)
+            }), 500
+
+@app.post('/api/create_user_type')
+def create_user_type():
+    try:
+        body = request.get_json()
+        descr = body.get('descr')
+        
+        user_type = UserType(descr=descr)
+        db.session.add(user_type)
+        db.session.commit()
+        
+        return jsonify({
+            'message': "Tipo de usuário criado com sucesso!"
+        }), 201
+        
+    except Exception as error:
+        print_error_details(error)
+        return jsonify({
+                'status': 'error',
+                'message': 'An error has occurred!',
+                'error_class': str(error.__class__),
+                'error_cause': str(error.__cause__)
+            }), 500
+            
+            
+@app.get('/api/get_user_types')
+def get_user_type():
+    try:   
+        user_types = UserType.query.all()
+        schema = UserTypeSchema(many=True)
+        payload = schema.dump(user_types)
+        return jsonify({
+            'user_types': payload
+        }), 200
+        
+    except Exception as error:
+        print_error_details(error)
+        return jsonify({
+                'status': 'error',
+                'message': 'An error has occurred!',
+                'error_class': str(error.__class__),
+                'error_cause': str(error.__cause__)
+            }), 500
+
+
+@app.post('/api/authenticate_user')
+def authenticate_user():
+    try:
+        body = request.get_json()
+        email = body.get('email')
+        password = body.get('password')
+        
+        user = User.query.filter_by(email=email).first()
+        
+        if user == None:
+            return jsonify({
+                'status': 'error',
+                'message': 'Usuario não existe!'
             }), 200
             
-        except Exception as error:
-            print_error_details(error)
-            return jsonify({
-                    'status': 'error',
-                    'message': 'An error has occurred!',
-                    'error_class': str(error.__class__),
-                    'error_cause': str(error.__cause__)
-                }), 500
-
-
-@app.route('/api/get_user_by_id', methods=['GET'])
-def get_user_by_id():
-    if request.method == 'GET':
-        try:
-            id = request.args.get('user_id')
-            user = User.query.filter_by(id=id).first()
-            
-            if user == None:
-                return jsonify({
-                    'status': 'error',
-                    'message': 'Usuario não existe!'
-                }), 200
-            
+        checked_password = check_password_hash(user.password_hash, password)
+        
+        if checked_password: 
             schema = UserSchema()
             payload = schema.dump(user)
+            token = jwt.encode({"email": user.email, 'id': user.id}, SECRET_KEY)
+            
             return jsonify({
-                'status': 'ok',
-                'user': payload
+                'token': token, 
+                'user': payload,
+                'status': 'ok'
+            }), 200
+        else:
+            return jsonify({
+                'status': 'error',
+                'message': 'Senha incorreta!'
             }), 200
             
-        except Exception as error:
-            print_error_details(error)
-            return jsonify({
-                    'status': 'error',
-                    'message': 'An error has occurred!',
-                    'error_class': str(error.__class__),
-                    'error_cause': str(error.__cause__)
-                }), 500
-
-@app.route('/api/create_user_type', methods=['POST'])
-def create_user_type():
-    if request.method == 'POST':
-        try:
-            body = request.get_json()
-            descr = body.get('descr')
+    except Exception as error:
+        print_error_details(error)
+        return jsonify({
+                'status': 'error',
+                'message': 'An error has occurred!',
+                'error_class': str(error.__class__),
+                'error_cause': str(error.__cause__)
+            }), 500
             
-            user_type = UserType(descr=descr)
-            db.session.add(user_type)
-            db.session.commit()
-            
-            return jsonify({
-                'message': "Tipo de usuário criado com sucesso!"
-            }), 201
-            
-        except Exception as error:
-            print_error_details(error)
-            return jsonify({
-                    'status': 'error',
-                    'message': 'An error has occurred!',
-                    'error_class': str(error.__class__),
-                    'error_cause': str(error.__cause__)
-                }), 500
-            
-            
-@app.route('/api/get_user_types', methods=['GET'])
-def get_user_type():
-    if request.method == 'GET':
-        try:   
-            user_types = UserType.query.all()
-            schema = UserTypeSchema(many=True)
-            payload = schema.dump(user_types)
-            return jsonify({
-                'users': payload
-            }), 200
-            
-        except Exception as error:
-            print_error_details(error)
-            return jsonify({
-                    'status': 'error',
-                    'message': 'An error has occurred!',
-                    'error_class': str(error.__class__),
-                    'error_cause': str(error.__cause__)
-                }), 500
-
-
-@app.route('/api/authenticate_user', methods=['POST'])
-def authenticate_user():
-    if request.method == 'POST':
-        try:
-            body = request.get_json()
-            email = body.get('email')
-            password = body.get('password')
-            
-            user = User.query.filter_by(email=email).first()
-            
-            if user == None:
-                return jsonify({
-                    'status': 'error',
-                    'message': 'Usuario não existe!'
-                }), 200
-                
-            checked_password = check_password_hash(user.password_hash, password)
-            
-            if checked_password: 
-                schema = UserSchema()
-                payload = schema.dump(user)
-                token = jwt.encode({"email": user.email, 'id': user.id}, SECRET_KEY)
-                
-                return jsonify({
-                    'token': token, 
-                    'user': payload,
-                    'status': 'ok'
-                }), 200
-            else:
-                return jsonify({
-                    'status': 'error',
-                    'message': 'Senha incorreta!'
-                }), 200
-                
-        except Exception as error:
-            print_error_details(error)
-            return jsonify({
-                    'status': 'error',
-                    'message': 'An error has occurred!',
-                    'error_class': str(error.__class__),
-                    'error_cause': str(error.__cause__)
-                }), 500
-            
-@app.route('/api/create_post', methods=['POST'])
+@app.post('/api/create_post')
 def create_post():
-    if request.method == 'POST':
-        try:
-            body = request.get_json()
-            content = body.get('content')
-            owner_id = body.get('owner_id')
-            user = User.query.filter_by(id=owner_id).first()
-            post = Post(content=content, owner=user.id)
-            db.session.add(post)
-            db.session.commit()
+    try:
+        body = request.get_json()
+        content = body.get('content')
+        owner_id = body.get('owner_id')
+        user = User.query.filter_by(id=owner_id).first()
+        post = Post(content=content, owner=user.id)
+        db.session.add(post)
+        db.session.commit()
+        
+        return jsonify({
+            'status': 'ok',
+            'message': 'Post criado com sucesso!'
+        }), 201
+        
+    except Exception as error:
+        print_error_details(error)
+        return jsonify({
+                'status': 'error',
+                'message': 'An error has occurred!',
+                'error_class': str(error.__class__),
+                'error_cause': str(error.__cause__)
+            }), 500
             
-            return jsonify({
-                'status': 'ok',
-                'message': 'Post criado com sucesso!'
-            }), 201
             
-        except Exception as error:
-            print_error_details(error)
-            return jsonify({
-                    'status': 'error',
-                    'message': 'An error has occurred!',
-                    'error_class': str(error.__class__),
-                    'error_cause': str(error.__cause__)
-                }), 500
-            
-            
-@app.route('/api/generate_feed', methods=['GET'])
+@app.get('/api/generate_feed')
 def generate_feed():
-    if request.method == 'GET':
-        try:
-            id = request.args.get('user_id')
-            
-            posts = Post.query.filter_by(owner=id).order_by(Post.created_at.desc()).all()
-            schema = PostSchema(many=True)
-            payload = schema.dump(posts)
-            
-            return jsonify({
-                'status': 'ok',
-                'posts': payload
-            }), 201
-            
-        except Exception as error:
-            print_error_details(error)
-            return jsonify({
-                    'status': 'error',
-                    'message': 'An error has occurred!',
-                    'error_class': str(error.__class__),
-                    'error_cause': str(error.__cause__)
-                }), 500
+    try:
+        id = request.args.get('user_id')
+        
+        posts = Post.query.order_by(Post.created_at.desc()).all()
+        schema = PostSchema(many=True)
+        payload = schema.dump(posts)
+        
+        return jsonify({
+            'status': 'ok',
+            'posts': payload
+        }), 201
+        
+    except Exception as error:
+        print_error_details(error)
+        return jsonify({
+                'status': 'error',
+                'message': 'An error has occurred!',
+                'error_class': str(error.__class__),
+                'error_cause': str(error.__cause__)
+            }), 500
 
    
 @app.get('/api/get_posts')
@@ -326,7 +318,6 @@ def get_post_comments():
         PER_PAGE = 3
         post_id = request.args.get('post_id')
         page = request.args.get('page', 1, type=int)
-        print(page)
         comments = Comment.query.filter_by(post_id=post_id).order_by(Comment.created_at.desc())
         comments = comments.paginate(page=page, per_page=PER_PAGE, error_out=False)
         schema = CommentSchema(many=True)
