@@ -1,7 +1,6 @@
-from app.config.app_config import *
-from app.config.db_config import *
+from app.extensions import Base, db
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from sqlalchemy import String, ForeignKey, Text
+from sqlalchemy import String, ForeignKey
 from uuid import uuid4, UUID
 
 

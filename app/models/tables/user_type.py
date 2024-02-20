@@ -1,9 +1,6 @@
-from app.config.app_config import *
-from app.config.db_config import *
+from app.extensions import Base, db
 from sqlalchemy.orm import Mapped, mapped_column, relationship, backref
-from sqlalchemy import String, Text
-from uuid import uuid4, UUID
-from datetime import datetime
+from sqlalchemy import String
 
 
 class UserType(Base):

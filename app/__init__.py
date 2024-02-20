@@ -1,10 +1,31 @@
+import os
 from flask import Flask
+from flask_cors import CORS
+from dotenv import load_dotenv
+from .extensions import *
+from app.controllers.post_routes.routes import post_route
+from app.controllers.user_routes.routes import user_route
+from app.controllers.test_routes.routes import test_route
+from app.controllers.auth_routes.routes import auth_route
 
-app = Flask(__name__)
 
+load_dotenv()
 
-from app.controllers import routes
-from app.models.tables.user import User
-from app.models.tables.user_type import UserType
-from app.models.tables.post import Post
-from app.models.tables.comment import Comment
+def create_app():
+    app = Flask(__name__)
+    
+    app.config['SECRET_KEY'] = os.getenv('SECRET_KEY')
+    app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL')
+    CORS(app)
+    
+    db.init_app(app)
+    migrate.init_app(app, db)
+    ma.init_app(app)
+    
+    app.register_blueprint(user_route)
+    app.register_blueprint(post_route)
+    app.register_blueprint(test_route)
+    app.register_blueprint(auth_route)
+    
+    
+    return app

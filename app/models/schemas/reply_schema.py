@@ -1,5 +1,4 @@
-from app.config.app_config import *
-from app.config.db_config import *
+from app.extensions import ma
 from app.models.tables.reply import Reply
 
 class ReplySchema(ma.SQLAlchemyAutoSchema):
