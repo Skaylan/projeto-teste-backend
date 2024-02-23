@@ -7,6 +7,17 @@ from sqlalchemy import text
 from datetime import datetime
 from sqlalchemy.orm import aliased
 from app.extensions import db
+from app.models.tables.area import Area
+from app.models.tables.company import Company
+from app.models.tables.theme import Theme
+from app.models.tables.form_diagnostic import FormDiagnostic
+from app.models.tables.form_theme_response import FormThemeResponse
+from app.models.tables.user_company import UserCompany
+from app.models.tables.skill import Skill
+from app.models.tables.form_skill_response import FormSkillResponse
+from app.models.tables.question import Question
+from app.models.tables.form_question_response import FormQuestionResponse
+from app.models.tables.form_theme_response import FormThemeResponse
 
 
 test_route = Blueprint('test_route', __name__)

@@ -19,7 +19,7 @@ def create_post():
         content = body.get('content')
         owner_id = body.get('owner_id')
         user = User.query.filter_by(id=owner_id).first()
-        post = Post(content=content, owner=user.id)
+        post = Post(content=content, owner_id=user.id)
         db.session.add(post)
         db.session.commit()
         

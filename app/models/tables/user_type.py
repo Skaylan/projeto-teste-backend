@@ -1,7 +1,7 @@
 from app.extensions import Base, db
 from sqlalchemy.orm import Mapped, mapped_column, relationship, backref
 from sqlalchemy import String
-
+from uuid import uuid4
 
 class UserType(Base):
     id = db.Column(String(36), primary_key=True, default=lambda: str(uuid4()))
