@@ -18,7 +18,8 @@ from app.models.tables.form_skill_response import FormSkillResponse
 from app.models.tables.question import Question
 from app.models.tables.form_question_response import FormQuestionResponse
 from app.models.tables.form_theme_response import FormThemeResponse
-
+from app.controllers.utils import convert_image_to_base64
+from app.controllers.routes.social_media_routes import IMAGES_SAVE_PATH
 
 test_route = Blueprint('test_route', __name__)
 
@@ -129,6 +130,25 @@ def test_sqlalchemy():
             'posts': payload
         }), 200
         
+    except Exception as error:
+        print_error_details(error)
+        return jsonify({
+                'status': 'error',
+                'message': 'An error has occurred!',
+                'error_class': str(error.__class__),
+                'error_cause': str(error.__cause__)
+            }), 500
+        
+        
+@test_route.get('/api/get_img')
+def get_img():
+    try:
+        image = convert_image_to_base64(IMAGES_SAVE_PATH, '1')
+        return jsonify({
+            'status': 'ok',
+            'message': 'ok',
+            'image': image
+        })
     except Exception as error:
         print_error_details(error)
         return jsonify({

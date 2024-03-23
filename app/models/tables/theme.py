@@ -1,11 +1,11 @@
 from app.extensions import Base, db
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from sqlalchemy import String, Boolean
+from sqlalchemy import String, Boolean, Integer
 from uuid import uuid4, UUID
 
 
 class Theme(Base):
-  id = db.Column(String(36), primary_key=True, default=lambda: str(uuid4()))
+  id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
   type: Mapped[str] = mapped_column(String(10), unique=True, nullable=False)
   descr: Mapped[str] = mapped_column(String(100), unique=False, nullable=False)
   active: Mapped[bool] = mapped_column(Boolean, default=True, unique=False, nullable=False)

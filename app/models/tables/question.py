@@ -5,7 +5,7 @@ from uuid import uuid4, UUID
 
 
 class Question(Base):
-  id: Mapped[UUID] = mapped_column(primary_key=True, default=uuid4)
+  id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
   type: Mapped[str] = mapped_column(String(10), unique=False, nullable=False)
   order: Mapped[int] = mapped_column(Integer, unique=False, nullable=False)
   descr: Mapped[str] = mapped_column(String(200), unique=False, nullable=False)

@@ -31,7 +31,7 @@ def authenticate_user():
         if checked_password: 
             schema = UserSchema()
             payload = schema.dump(user)
-            token = jwt.encode({"email": user.email, 'id': user.id}, SECRET_KEY)
+            token = jwt.encode({"email": user.email, 'id': user.id, 'name': user.name}, SECRET_KEY)
             
             return jsonify({
                 'token': token, 

@@ -6,6 +6,7 @@ from app.models.schemas.user_schema import UserSchema
 from app.models.schemas.user_type_schema import UserTypeSchema
 from werkzeug.security import generate_password_hash
 from app.extensions import db
+from sqlalchemy import or_
 
 
 user_route = Blueprint('user_route', __name__)
@@ -41,8 +42,14 @@ def create_user():
 
 @user_route.get('/api/get_users')
 def get_users():
-    try:   
-        users = User.query.all()
+    try:
+        search = request.args.get('search')
+        if search == '' or search == 'undefined':
+            users = User.query.all()
+        elif search != '' or search != 'undefined':
+            users = User.query.filter(or_(User.name.like(f'%{search}%'), User.email.like(f'%{search}%'))).all()
+            print("aqui>>>", users)
+        
         schema = UserSchema(many=True)
         payload = schema.dump(users)
         return jsonify({

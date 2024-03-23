@@ -6,8 +6,8 @@ from uuid import uuid4, UUID
 
 class FormSkillResponse(Base):
   id = db.Column(String(36), primary_key=True, default=lambda: str(uuid4()))
-  form_id: Mapped[UUID] = mapped_column(String(36), ForeignKey('form_diagnostic.id'), unique=False, nullable=False)
-  skill_id: Mapped[UUID] = mapped_column(String(36), ForeignKey('skill.id'), unique=False, nullable=False)
+  form_id: Mapped[UUID] = mapped_column(String(36), ForeignKey('form_diagnostic.id'), unique=True, nullable=False)
+  skill_id: Mapped[int] = mapped_column(Integer, ForeignKey('skill.id'), unique=True, nullable=False)
   order: Mapped[int] = mapped_column(Integer, unique=False, nullable=False)
   
   

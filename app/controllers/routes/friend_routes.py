@@ -4,10 +4,8 @@ from app.models.tables.friendship import Friendship
 from app.models.schemas.friendship_schema import FriendshipSchema
 from app.extensions import db
 
+
 friend_route = Blueprint('friend_route', __name__)
-
-
-
 
 @friend_route.post('/api/add_friend')
 def add_friend():
@@ -16,8 +14,10 @@ def add_friend():
     user_id = body.get('user_id')
     friend_id = body.get('friend_id')
 
-    friend = Friendship(user_id=user_id, friend_id=friend_id)
-    db.session.add(friend)
+    friend1 = Friendship(user_id=user_id, friend_id=friend_id)
+    friend2 = Friendship(user_id=friend_id, friend_id=user_id)
+    db.session.add(friend1)
+    db.session.add(friend2)
     db.session.commit()
 
     return jsonify({

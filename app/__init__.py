@@ -3,7 +3,7 @@ from flask import Flask
 from flask_cors import CORS
 from dotenv import load_dotenv
 from .extensions import *
-from app.controllers.routes.post_routes import post_route
+from app.controllers.routes.social_media_routes import social_media_route
 from app.controllers.routes.user_routes import user_route
 from app.controllers.routes.test_routes import test_route
 from app.controllers.routes.auth_routes import auth_route
@@ -24,7 +24,7 @@ def create_app():
     ma.init_app(app)
     
     app.register_blueprint(user_route)
-    app.register_blueprint(post_route)
+    app.register_blueprint(social_media_route)
     app.register_blueprint(test_route)
     app.register_blueprint(auth_route)
     app.register_blueprint(friend_route)

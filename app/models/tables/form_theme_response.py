@@ -6,11 +6,11 @@ from uuid import uuid4, UUID
 
 class FormThemeResponse(Base):
   id = db.Column(String(36), primary_key=True, default=lambda: str(uuid4()))
-  user_id: Mapped[UUID] = mapped_column(String(36), ForeignKey('user.id'), unique=False, nullable=False)
-  theme_id: Mapped[UUID] = mapped_column(String(36), ForeignKey('theme.id'), unique=False, nullable=False)
+  form_id: Mapped[UUID] = mapped_column(String(36), ForeignKey('form_diagnostic.id'), unique=True, nullable=False)
+  theme_id: Mapped[int] = mapped_column(Integer, ForeignKey('theme.id'), unique=True, nullable=False)
   order: Mapped[int] = mapped_column(Integer, unique=False, nullable=False)
   
-  def __init__(self, user_id: UUID, theme_id: UUID, order: int):
-    self.user_id = user_id
+  def __init__(self, form_id: UUID, theme_id: UUID, order: int):
+    self.form_id = form_id
     self.theme_id = theme_id
     self.order = order

@@ -1,5 +1,5 @@
 from app.extensions import Base, db
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy import String, ForeignKey
 from uuid import uuid4, UUID
 
@@ -10,7 +10,7 @@ class Reply(Base):
     post_id: Mapped[UUID] = mapped_column(String(36), ForeignKey('post.id'), unique=False, nullable=False)
     owner_id: Mapped[UUID] = mapped_column(String(36), ForeignKey('user.id'), unique=False, nullable=False)
     parent_comment_id: Mapped[UUID] = mapped_column(String(36), ForeignKey('comment.id'), unique=False, nullable=False)
-
+    owner = relationship('User', backref='reply', uselist=False, foreign_keys=[owner_id])
 
     def __init__(self, comment: str, owner_id: UUID, parent_comment_id: UUID, post_id: UUID):
         self.comment = comment
