@@ -11,7 +11,8 @@ class Group(Base):
   user_id: Mapped[UUID] = mapped_column(String(36), ForeignKey('user.id'), unique=False, nullable=False)
   custom_theme_id: Mapped[int] = mapped_column(Integer, ForeignKey('group_custom_theme.id'), unique=False, nullable=False)
   
-  def __init__(self, name: str, descr: str, user_id: UUID):
+  def __init__(self, name: str, descr: str, user_id: UUID, custom_theme_id: int):
     self.name = name
     self.descr = descr
     self.user_id = user_id
+    self.custom_theme_id = custom_theme_id

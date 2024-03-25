@@ -1,9 +1,11 @@
+import os
 from app.controllers.utils import print_error_details
 from flask import jsonify, request, Blueprint
 from app.models.tables.user import User
 from app.models.tables.post_images import PostImages
 from app.models.tables.group_custom_theme import GroupCustomTheme
 from app.models.tables.group import Group
+from app.models.schemas.group_schema import GroupSchema
 from app.models.tables.user_group import UserGroup
 from app.models.tables.post import Post
 from app.models.tables.reply import Reply
@@ -15,10 +17,14 @@ from app.models.schemas.comments_schema import CommentSchema
 from app.extensions import db
 from sqlalchemy import or_
 from uuid import uuid4
+from dotenv import load_dotenv
 from app.controllers.utils import convert_base64_to_image, compress_image, convert_image_to_base64
+from app.models.tables.group_posts import GroupPosts
 
-IMAGES_SAVE_PATH = 'C://Users//lucas//Documents//projetos//projeto-teste//backend//app//images'
 
+load_dotenv()
+
+IMAGES_SAVE_PATH = '/home/lucas/Documentos/projetos/projeto-test/projeto-teste-backend/app/images'
 
 social_media_route = Blueprint('social_media_route', __name__)
 
@@ -80,7 +86,7 @@ def generate_feed():
         schema = PostSchema(many=True)
         payload = schema.dump(posts)
         for i, _ in enumerate(payload):
-            # print("AQUI >>>>>", payload[i])
+            
             if payload[i]['has_image']:
                 post_id = payload[i]['id']
                 post_image = PostImages.query.filter_by(post_id=post_id).first()
@@ -279,17 +285,34 @@ def create_group():
         tags = body.get('tags')
         image_base64 = body.get('image_base64')
         
+        custom_theme = {"theme": [theme for theme in tags]}
+        group_custom_theme = GroupCustomTheme(descr=str(custom_theme))
+        db.session.add(group_custom_theme)
+        db.session.commit()
+        
+        print("Aqui >>>>", group_custom_theme.id)
+        new_group = Group(
+            name=group_name, 
+            descr=group_description, 
+            user_id=user_id, 
+            custom_theme_id=group_custom_theme.id
+        )
+        
+        db.session.add(new_group)
+        db.session.commit()
+        
+        user_group = UserGroup(user_id=user_id, group_id=new_group.id)
+        db.session.add(user_group)
+        db.session.commit()
+        
+        
         
         return jsonify({
-            'data': {'group_name': group_name, 
-                    'group_description': group_description, 
-                    'user_id': user_id, 
-                    'tags': tags, 
-                    'image_base64': image_base64
-                    },
+            'group_id': new_group.id,
             'status': 'ok',
-            'message': 'ok'    
-        }), 200
+            'message': 'Grupo criado com sucesso!'    
+        }), 201
+        
     except Exception as error:
         print_error_details(error)
         return jsonify({
@@ -298,3 +321,119 @@ def create_group():
                 'error_class': str(error.__class__),
                 'error_cause': str(error.__cause__)
             }), 500
+        
+@social_media_route.get('/api/get_user_groups')
+def get_user_groups():
+    try:
+        user_id = request.args.get('user_id')
+        user_groups = UserGroup.query.filter_by(user_id=user_id).all()
+        groups_ids = [ids.group_id for ids in user_groups]
+
+        groups = Group.query.filter(Group.id.in_(groups_ids)).all()
+        schema = GroupSchema(many=True)
+        payload = schema.dump(groups)
+        
+        return jsonify({
+            'status': 'ok',
+            'groups': payload
+        }), 200
+        
+    except Exception as error:
+        print_error_details(error)
+        return jsonify({
+                'status': 'error',
+                'message': 'An error has occurred!',
+                'error_class': str(error.__class__),
+                'error_cause': str(error.__cause__)
+            }), 500
+        
+@social_media_route.get('/api/generate_all_groups_feed')
+def generate_all_groups_feed():
+    try:
+        user_id = request.args.get('user_id')
+        user_groups = UserGroup.query.filter_by(user_id=user_id).all()
+        groups_ids = [ids.group_id for ids in user_groups]
+        group_posts = GroupPosts.query.filter(GroupPosts.group_holder_id.in_(groups_ids)).all()
+        posts_ids = [post.post_id for post in group_posts]
+        posts = Post.query.filter(Post.id.in_(posts_ids)).all()
+        
+        schema = PostSchema(many=True)
+        payload = schema.dump(posts)
+        
+        return jsonify({
+            'status': 'ok',
+            'posts': payload
+        }), 200
+        
+    except Exception as error:
+        print_error_details(error)
+        return jsonify({
+                'status': 'error',
+                'message': 'An error has occurred!',
+                'error_class': str(error.__class__),
+                'error_cause': str(error.__cause__)
+            }), 500
+        
+@social_media_route.get('/api/generate_group_feed')
+def generate_group_feed():
+    try:
+        group_id = request.args.get('group_id')
+        group_posts = GroupPosts.query.filter_by(group_holder_id=group_id).all()
+        posts_ids = [post.post_id for post in group_posts]
+        posts = Post.query.filter(Post.id.in_(posts_ids)).all()
+        
+        schema = PostSchema(many=True)
+        payload = schema.dump(posts)
+        
+        return jsonify({
+            'status': 'ok',
+            'posts': payload
+        }), 200
+        
+    except Exception as error:
+        print_error_details(error)
+        return jsonify({
+            'status': 'error',
+            'message': 'An error has occurred!',
+            'error_class': str(error.__class__),
+            'error_cause': str(error.__cause__)
+        })
+        
+        
+@social_media_route.post('/api/create_group_post')
+def create_group_post():
+    try:
+        body = request.get_json()
+        post_content = body.get('content')
+        group_id = body.get('group_id')
+        owner_id = body.get('owner_id')
+        has_image = body.get('has_image')
+        
+        print("Aqui >>>", body)
+        new_post = Post(content=post_content, owner_id=owner_id, has_image=has_image)
+        
+        db.session.add(new_post)
+        db.session.commit()
+        
+        new_group_post = GroupPosts(post_id=new_post.id, group_holder_id=group_id)
+        db.session.add(new_group_post)
+        db.session.commit()
+        
+        
+        schema = PostSchema()
+        payload = schema.dump(new_post)
+        
+        return jsonify({
+            'status': 'ok',
+            'message': 'Post criado com sucesso!',
+            'post': payload
+        }), 201
+        
+    except Exception as error:
+        print_error_details(error)
+        return jsonify({
+            'status': 'error',
+            'message': 'An error has occurred!',
+            'error_class': str(error.__class__),
+            'error_cause': str(error.__cause__)
+        })

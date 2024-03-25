@@ -21,9 +21,9 @@ from app.models.tables.form_theme_response import FormThemeResponse
 from app.controllers.utils import convert_image_to_base64
 from app.controllers.routes.social_media_routes import IMAGES_SAVE_PATH
 
-test_route = Blueprint('test_route', __name__)
+route_for_testing = Blueprint('route_for_testing', __name__)
 
-@test_route.get('/api/test_view')
+@route_for_testing.get('/api/test_view')
 def test_view():
     try:
         
@@ -86,7 +86,7 @@ def test_view():
             }), 500
         
         
-@test_route.get('/api/test_sqlalchemy')
+@route_for_testing.get('/api/test_sqlalchemy')
 def test_sqlalchemy():
     try:
         
@@ -140,7 +140,7 @@ def test_sqlalchemy():
             }), 500
         
         
-@test_route.get('/api/get_img')
+@route_for_testing.get('/api/get_img')
 def get_img():
     try:
         image = convert_image_to_base64(IMAGES_SAVE_PATH, '1')
